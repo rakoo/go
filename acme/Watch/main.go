@@ -206,7 +206,7 @@ func runSetup(id int) {
 	win.Addr("#0")
 }
 
-func runBackground(id int, dir, path string) {
+func runBackground(id int, dir, savedPath string) {
 	buf := make([]byte, 4096)
 	run.Lock()
 	for {
@@ -260,7 +260,17 @@ func runBackground(id int, dir, path string) {
 
 		cmd := exec.Command(rc, "-c", string(line))
 		cmd.Dir = dir
-		cmd.Env = append(cmd.Environ(), "SAVED_PATH="+path)
+		cmd.Env = append(cmd.Environ(), "SAVED_PATH="+savedPath)
+		windows, err := acme.Windows()
+		if err == nil {
+			// TODO at least log it
+			for _, w := range windows {
+				if win.ID() == w.ID {
+					cmd.Dir = path.Dir(w.Name)
+					break
+				}
+			}
+		}
 		r, w, err := os.Pipe()
 		if err != nil {
 			log.Fatal(err)
